@@ -1,4 +1,6 @@
+use num_format::{Locale, ToFormattedString};
 use scraper::{ElementRef, Html, Selector};
+use ureq;
 
 #[derive(Debug)]
 enum Level {
@@ -9,12 +11,16 @@ enum Level {
 #[derive(Debug)]
 struct Player {
     name: String,
-    salary: i32,
+    salary: i64,
     level: Level,
 }
 
 fn main() {
-    let html = include_str!("../data.html");
+    let html = ureq::get("https://questionnaire-148920.appspot.com/swe/data.html")
+        .call()
+        .expect("Failed to get QO data")
+        .into_string()
+        .expect("Response returned no text");
 
     let doc = Html::parse_document(&html);
     let sel = Selector::parse("td").unwrap();
@@ -37,7 +43,7 @@ fn main() {
         let player_salary = salary_ele.inner_html().trim_start_matches('$').to_string();
         let no_comma = player_salary.split(',').collect::<String>();
         // println!("{player_name}: {no_comma}");
-        let actual_salary = no_comma.parse::<i32>().unwrap_or(0);
+        let actual_salary = no_comma.parse::<i64>().unwrap_or(0);
 
         let level_ele = player_info[3];
         assert_eq!(level_ele.value().attr("class").unwrap(), "player-level");
@@ -57,5 +63,7 @@ fn main() {
     }
 
     players.sort_unstable_by(|a, b| b.salary.cmp(&a.salary));
-    println!("{:?}", players.chunks(150).next().unwrap());
+    let qo = &players[..150].iter().map(|p| p.salary).sum() / 150 as i64;
+    let offer = qo.to_formatted_string(&Locale::en);
+    println!("The qualifying offer is {offer}");
 }
