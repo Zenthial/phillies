@@ -55,3 +55,5 @@ def is_palindrome(input: str):
 
 ## a. Qualifying Offer
 Repo Link: https://github.com/Zenthial/phillies
+
+Online REPL Link: https://www.rustexplorer.com/b/4lpqfp
